@@ -18,7 +18,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.modelmapper.ModelMapper;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -119,19 +118,37 @@ public class QuizTakerServiceImplTest {
         );
     }
 
-    public QuestionAnswer getQuestionAnswer(){
-        return  QuestionAnswer
+    public QuestionAnswer getQuestionAnswer() {
+        QuestionAnswer questionAnswer = QuestionAnswer
                 .builder()
-                .id(1l)
-                .options(Set.of(
-                        Option.builder()
-                                .id(1l)
-                                .optionText("Option 1")
-                                .build()
-                ))
+                .id(1L)
+                .options(List.of(Option.builder()
+                        .id(1l)
+                        .optionText("Option 1")
+                        .build()))
                 .build();
+        return questionAnswer;
     }
-    public Set<Option> getQuestionOptions() {
+
+    public List<OptionDTO> getCorrectQuestionOptions() {
+        OptionDTO option1 = OptionDTO.builder()
+                .optionId(1l)
+                .optionText("Option 1")
+                .build();
+
+        return List.of(option1);
+    }
+
+    public List<OptionDTO> getIncorrectQuestionOptions() {
+        OptionDTO option2 = OptionDTO.builder()
+                .optionId(2l)
+                .optionText("Option 2")
+                .build();
+
+        return List.of(option2);
+    }
+
+    public List<Option> getQuestionOptions() {
         Option option1 = Option.builder()
                 .id(1l)
                 .optionText("Option 1")
@@ -142,6 +159,6 @@ public class QuizTakerServiceImplTest {
                 .optionText("Option 2")
                 .build();
 
-        return Set.of(option1,option2);
+        return List.of(option1,option2);
     }
 }

@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
 import java.util.Set;
 
 @AllArgsConstructor
@@ -19,7 +20,7 @@ public class QuestionDTO {
 
     private String type;
 
-    private Set<OptionDTO> options;
+    private List<OptionDTO> correctOptions;
 
-    private QuestionAnswerDTO answer;
+    private List<OptionDTO> incorrectOptions;
 }

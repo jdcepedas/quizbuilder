@@ -6,8 +6,6 @@ import com.quizbuilder.service.QuizTakerService;
 import com.quizbuilder.dto.AttemptAnswerDTO;
 import com.quizbuilder.dto.AttemptDTO;
 import com.quizbuilder.enums.QuestionTypeEnum;
-import com.toptotal.quizbuilder.model.*;
-import com.toptotal.quizbuilder.repository.*;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

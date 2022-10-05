@@ -7,7 +7,6 @@ import com.quizbuilder.dto.QuizDTO;
 import com.quizbuilder.model.Quiz;
 import com.quizbuilder.repository.QuizRepository;
 import com.quizbuilder.service.QuizBuilderService;
-import com.toptotal.quizbuilder.dto.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -15,7 +14,6 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 
@@ -52,8 +50,8 @@ public class QuizBuilderServiceImplTest {
         QuestionDTO questionDTO = QuestionDTO
                 .builder()
                 .id(1L)
-                .options(getQuestionOptions())
-                .answer(getQuestionAnswer())
+                .correctOptions(getCorrectQuestionOptions())
+                .incorrectOptions(getIncorrectQuestionOptions())
                 .statement("Statement")
                 .type("SINGLE_ANSWER")
                 .build();
@@ -61,29 +59,21 @@ public class QuizBuilderServiceImplTest {
         return questionDTO;
     }
 
-    public QuestionAnswerDTO getQuestionAnswer() {
-        QuestionAnswerDTO answer = QuestionAnswerDTO
-                .builder()
-                .options(List.of(OptionDTO.builder()
-                                .optionId(1l)
-                                .optionText("Option 1")
-                        .build()))
-                .build();
-
-        return answer;
-    }
-
-    public Set<OptionDTO> getQuestionOptions() {
+    public List<OptionDTO> getCorrectQuestionOptions() {
         OptionDTO option1 = OptionDTO.builder()
                 .optionId(1l)
                 .optionText("Option 1")
                 .build();
 
+        return List.of(option1);
+    }
+
+    public List<OptionDTO> getIncorrectQuestionOptions() {
         OptionDTO option2 = OptionDTO.builder()
                 .optionId(2l)
                 .optionText("Option 2")
                 .build();
 
-        return Set.of(option1,option2);
+        return List.of(option2);
     }
 }

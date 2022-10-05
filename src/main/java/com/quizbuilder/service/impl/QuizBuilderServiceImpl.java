@@ -1,15 +1,13 @@
 package com.quizbuilder.service.impl;
 
 import com.quizbuilder.dto.OptionDTO;
-import com.quizbuilder.dto.QuestionAnswerDTO;
 import com.quizbuilder.dto.QuestionDTO;
 import com.quizbuilder.dto.QuizDTO;
 import com.quizbuilder.enums.QuestionTypeEnum;
 import com.quizbuilder.model.*;
+import com.quizbuilder.repository.OptionRepository;
 import com.quizbuilder.repository.QuizRepository;
 import com.quizbuilder.service.QuizBuilderService;
-import com.toptotal.quizbuilder.dto.*;
-import com.toptotal.quizbuilder.model.*;
 import com.quizbuilder.repository.UserRepository;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -22,8 +20,8 @@ import org.springframework.stereotype.Service;
 import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +32,9 @@ public class QuizBuilderServiceImpl implements QuizBuilderService {
 
     @Autowired
     private final QuizRepository quizRepository;
+
+    @Autowired
+    private final OptionRepository optionRepository;
 
     @Autowired
     private final UserRepository userRepository;
@@ -54,23 +55,28 @@ public class QuizBuilderServiceImpl implements QuizBuilderService {
         quiz.setPublished(quizDTO.getPublished());
 
         for(QuestionDTO question: quizDTO.getQuestions()) {
-            Set<OptionDTO> options = question.getOptions();
-            Set<Option> newOptions = options.stream()
+            List<OptionDTO> incorrectOptionsDTO = question.getIncorrectOptions();
+            List<Option> incorrectOptions = incorrectOptionsDTO.stream()
                     .map(option -> modelMapper.map(option, Option.class))
-                    .collect(Collectors.toSet());
+                    .collect(Collectors.toList());
+            incorrectOptions = optionRepository.saveAll(incorrectOptions);
 
-            QuestionAnswerDTO answerDTO = question.getAnswer();
+            List<OptionDTO> correctOptionsDTO = question.getCorrectOptions();
+            List<Option> correctOptions = correctOptionsDTO.stream()
+                    .map(option -> modelMapper.map(option, Option.class))
+                    .collect(Collectors.toList());
+            correctOptions = optionRepository.saveAll(correctOptions);
+
             QuestionAnswer answer = QuestionAnswer.builder()
-                    .options(answerDTO.getOptions().stream()
-                            .map( option -> modelMapper.map(option, Option.class))
-                            .collect(Collectors.toSet()))
+                    .options(correctOptions)
                     .build();
+
 
             Question newQuestion = Question.builder()
                     .answer(answer)
                     .statement(question.getStatement())
                     .type(QuestionTypeEnum.valueOf(question.getType()))
-                    .options(newOptions)
+                    .options(Stream.concat(correctOptions.stream(), incorrectOptions.stream()).toList())
                     .build();
 
             questions.add(newQuestion);
@@ -107,23 +113,28 @@ public class QuizBuilderServiceImpl implements QuizBuilderService {
         quiz.setPublished(quizDTO.getPublished());
 
         for(QuestionDTO question: quizDTO.getQuestions()) {
-            Set<OptionDTO> options = question.getOptions();
-            Set<Option> newOptions = options.stream()
+            List<OptionDTO> incorrectOptionsDTO = question.getIncorrectOptions();
+            List<Option> incorrectOptions = incorrectOptionsDTO.stream()
                     .map(option -> modelMapper.map(option, Option.class))
-                    .collect(Collectors.toSet());
+                    .collect(Collectors.toList());
+            incorrectOptions = optionRepository.saveAll(incorrectOptions);
 
-            QuestionAnswerDTO answerDTO = question.getAnswer();
+            List<OptionDTO> correctOptionsDTO = question.getCorrectOptions();
+            List<Option> correctOptions = correctOptionsDTO.stream()
+                    .map(option -> modelMapper.map(option, Option.class))
+                    .collect(Collectors.toList());
+            correctOptions = optionRepository.saveAll(correctOptions);
+
             QuestionAnswer answer = QuestionAnswer.builder()
-                    .options(answerDTO.getOptions().stream()
-                            .map( option -> modelMapper.map(option, Option.class))
-                            .collect(Collectors.toSet()))
+                    .options(correctOptions)
                     .build();
+
 
             Question newQuestion = Question.builder()
                     .answer(answer)
                     .statement(question.getStatement())
                     .type(QuestionTypeEnum.valueOf(question.getType()))
-                    .options(newOptions)
+                    .options(Stream.concat(correctOptions.stream(), incorrectOptions.stream()).toList())
                     .build();
 
             questions.add(newQuestion);

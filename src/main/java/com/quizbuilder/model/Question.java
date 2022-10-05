@@ -7,7 +7,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 @Table(name = "questions")
@@ -37,7 +39,7 @@ public class Question {
     @JoinTable(	name = "question_options",
             joinColumns = @JoinColumn(name = "question_id"),
             inverseJoinColumns = @JoinColumn(name = "option_id"))
-    private Set<Option> options = new LinkedHashSet<>();
+    private List<Option> options = new ArrayList<>();
 
     @ManyToOne(cascade=CascadeType.PERSIST)
     private QuestionAnswer answer;

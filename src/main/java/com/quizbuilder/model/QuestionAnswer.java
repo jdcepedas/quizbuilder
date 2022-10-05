@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.util.List;
 import java.util.Set;
 
 @Table(name = "question_answer")
@@ -29,5 +30,5 @@ public class QuestionAnswer {
     @JoinTable(	name = "question_answer_options",
             joinColumns = @JoinColumn(name = "question_answer_id"),
             inverseJoinColumns = @JoinColumn(name = "option_id"))
-    protected Set<Option> options;
+    protected List<Option> options;
 }
