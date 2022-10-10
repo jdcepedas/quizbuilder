@@ -3,6 +3,7 @@ package com.quizbuilder.service.impl;
 import com.quizbuilder.dto.OptionDTO;
 import com.quizbuilder.dto.QuestionDTO;
 import com.quizbuilder.dto.QuizDTO;
+import com.quizbuilder.enums.OptionStatusEnum;
 import com.quizbuilder.enums.QuestionTypeEnum;
 import com.quizbuilder.model.*;
 import com.quizbuilder.repository.OptionRepository;
@@ -31,16 +32,16 @@ import java.util.stream.Stream;
 public class QuizBuilderServiceImpl implements QuizBuilderService {
 
     @Autowired
-    private final QuizRepository quizRepository;
+    private QuizRepository quizRepository;
 
     @Autowired
-    private final OptionRepository optionRepository;
+    private OptionRepository optionRepository;
 
     @Autowired
-    private final UserRepository userRepository;
+    private UserRepository userRepository;
 
     @Autowired
-    private final ModelMapper modelMapper;
+    private ModelMapper modelMapper;
 
     @Override
     public Quiz createQuiz(QuizDTO quizDTO) {
@@ -55,28 +56,19 @@ public class QuizBuilderServiceImpl implements QuizBuilderService {
         quiz.setPublished(quizDTO.getPublished());
 
         for(QuestionDTO question: quizDTO.getQuestions()) {
-            List<OptionDTO> incorrectOptionsDTO = question.getIncorrectOptions();
-            List<Option> incorrectOptions = incorrectOptionsDTO.stream()
+            List<OptionDTO> optionsDTO = question.getOptions();
+            List<Option> options = optionsDTO.stream()
                     .map(option -> modelMapper.map(option, Option.class))
                     .collect(Collectors.toList());
-            incorrectOptions = optionRepository.saveAll(incorrectOptions);
 
-            List<OptionDTO> correctOptionsDTO = question.getCorrectOptions();
-            List<Option> correctOptions = correctOptionsDTO.stream()
-                    .map(option -> modelMapper.map(option, Option.class))
-                    .collect(Collectors.toList());
-            correctOptions = optionRepository.saveAll(correctOptions);
+            checkOptions(question.getType(), options);
 
-            QuestionAnswer answer = QuestionAnswer.builder()
-                    .options(correctOptions)
-                    .build();
-
+            options = optionRepository.saveAll(options);
 
             Question newQuestion = Question.builder()
-                    .answer(answer)
                     .statement(question.getStatement())
-                    .type(QuestionTypeEnum.valueOf(question.getType()))
-                    .options(Stream.concat(correctOptions.stream(), incorrectOptions.stream()).toList())
+                    .type(question.getType())
+                    .options(options.stream().collect(Collectors.toSet()))
                     .build();
 
             questions.add(newQuestion);
@@ -95,12 +87,28 @@ public class QuizBuilderServiceImpl implements QuizBuilderService {
         return newQuiz;
     }
 
+    static void checkOptions(QuestionTypeEnum type, List<Option> options) {
+        if(type.equals(QuestionTypeEnum.SINGLE_ANSWER)){
+            List<Option> correctOption = options
+                    .stream()
+                    .filter(option -> option.getStatus() == OptionStatusEnum.CORRECT)
+                    .collect(Collectors.toList());
+            if(correctOption.size() != 1) {
+                throw new RuntimeException("Question must have only one correct answer");
+            }
+        }
+    }
+
     public void publishQuiz(Long quizId) {
         Quiz quiz = quizRepository.findQuizById(quizId);
         quiz.setPublished(true);
     }
 
     public Quiz updateQuiz(QuizDTO quizDTO) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(username)
+                .orElseThrow(() -> new RuntimeException("Current user not found in the database"));
+
         Quiz quiz = quizRepository.findQuizById(quizDTO.getId());
 
         if(quiz.getPublished()) {
@@ -113,32 +121,30 @@ public class QuizBuilderServiceImpl implements QuizBuilderService {
         quiz.setPublished(quizDTO.getPublished());
 
         for(QuestionDTO question: quizDTO.getQuestions()) {
-            List<OptionDTO> incorrectOptionsDTO = question.getIncorrectOptions();
-            List<Option> incorrectOptions = incorrectOptionsDTO.stream()
+            List<OptionDTO> optionsDTO = question.getOptions();
+            List<Option> options = optionsDTO.stream()
                     .map(option -> modelMapper.map(option, Option.class))
                     .collect(Collectors.toList());
-            incorrectOptions = optionRepository.saveAll(incorrectOptions);
-
-            List<OptionDTO> correctOptionsDTO = question.getCorrectOptions();
-            List<Option> correctOptions = correctOptionsDTO.stream()
-                    .map(option -> modelMapper.map(option, Option.class))
-                    .collect(Collectors.toList());
-            correctOptions = optionRepository.saveAll(correctOptions);
-
-            QuestionAnswer answer = QuestionAnswer.builder()
-                    .options(correctOptions)
-                    .build();
-
+            options = optionRepository.saveAll(options);
 
             Question newQuestion = Question.builder()
-                    .answer(answer)
                     .statement(question.getStatement())
-                    .type(QuestionTypeEnum.valueOf(question.getType()))
-                    .options(Stream.concat(correctOptions.stream(), incorrectOptions.stream()).toList())
+                    .type(question.getType())
+                    .options(options.stream().collect(Collectors.toSet()))
                     .build();
 
             questions.add(newQuestion);
         }
+        quiz.setQuestions(questions);
+
+        List<Quiz> quizzes = user.getQuizzes();
+        if(quizzes != null) {
+            quizzes.add(quiz);
+        } else {
+            quizzes = new ArrayList<>();
+            quizzes.add(quiz);
+        }
+        userRepository.save(user);
 
         return quiz;
     }

@@ -1,5 +1,6 @@
 package com.quizbuilder.model;
 
+import com.quizbuilder.enums.OptionStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,4 +21,7 @@ public class Option {
     private Long id;
 
     private String optionText;
+
+    @Enumerated(EnumType.STRING)
+    private OptionStatusEnum status;
 }

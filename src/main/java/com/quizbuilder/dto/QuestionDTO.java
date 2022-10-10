@@ -1,12 +1,12 @@
 package com.quizbuilder.dto;
 
+import com.quizbuilder.enums.QuestionTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
-import java.util.Set;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -18,9 +18,7 @@ public class QuestionDTO {
 
     private String statement;
 
-    private String type;
+    private QuestionTypeEnum type;
 
-    private List<OptionDTO> correctOptions;
-
-    private List<OptionDTO> incorrectOptions;
+    private List<OptionDTO> options;
 }

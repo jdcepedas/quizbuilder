@@ -3,28 +3,37 @@ package com.quizbuilder.service.impl;
 import com.quizbuilder.dto.AttemptAnswerDTO;
 import com.quizbuilder.dto.AttemptDTO;
 import com.quizbuilder.enums.QuestionTypeEnum;
+import org.mockito.stubbing.Answer;
 import com.quizbuilder.model.*;
-import com.quizbuilder.repository.QuestionRepository;
-import com.quizbuilder.repository.QuizRepository;
-import com.quizbuilder.service.QuizTakerService;
-import com.quizbuilder.dto.OptionDTO;
-import com.quizbuilder.repository.AttemptRepository;
-import com.quizbuilder.repository.OptionRepository;
+import com.quizbuilder.repository.*;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
+
+import static com.quizbuilder.util.TestUtil.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class QuizTakerServiceImplTest {
+
+    @Mock
+    private UserRepository userRepository;
 
     @Mock
     private AttemptRepository attemptRepository;
@@ -41,24 +50,54 @@ public class QuizTakerServiceImplTest {
     @Mock
     private ModelMapper mapper;
 
+    @Mock
+    private User user;
+
+    @Mock
+    private SecurityContext context;
+
+    @Mock
+    private Authentication authentication;
+
     @InjectMocks
-    private QuizTakerService quizTakerService;
+    private QuizTakerServiceImpl quizTakerService;
+
+    @Before
+    public void setup() {
+        SecurityContextHolder.setContext(context);
+
+        when(context.getAuthentication())
+                .thenReturn(authentication);
+        when(authentication.getName())
+                .thenReturn("username@mail.com");
+        when(userRepository.findByEmail(anyString()))
+                .thenReturn(Optional.of(user));
+    }
 
     @Test
-    public void testAttemptQuiz(){
-        AttemptDTO attemptDTO = getAttemptDTO();
+    public void testAttemptQuiz_withOneQuestion_SingleAnswer_100Score(){
+        AttemptAnswerDTO attemptAnswerDTO = getAttemptAnswerDTO(1L);
+        AttemptDTO attemptDTO = getAttemptDTO(List.of(attemptAnswerDTO));
 
-        when(attemptRepository.findAttemptByQuizId(any()))
+        when(attemptRepository.findAttemptByUserIdAndQuizId(any(), any()))
                 .thenReturn(null);
 
         when(quizRepository.findQuizById(any()))
-                .thenReturn(getQuiz());
+                .thenReturn(getQuiz(QuestionTypeEnum.SINGLE_ANSWER, true));
 
         when(questionRepository.findQuestionById(any()))
-                .thenReturn(getQuizQuestions().get(0));
+                .thenReturn(getQuestion(QuestionTypeEnum.SINGLE_ANSWER));
 
-        when(optionRepository.findOptionById(1l))
-                .thenReturn(Option.builder().id(1l).optionText("Option 1").build());
+        when(optionRepository.findOptionById(1L))
+                .thenReturn(getCorrectOption(1L, "Option 1"));
+
+        doAnswer(new Answer() {
+            public Object answer(InvocationOnMock invocation) throws Throwable {
+                Attempt attempt = (Attempt) invocation.getArguments()[0];
+                attempt.setId(1L);
+                return attempt;
+            }
+        }).when(attemptRepository).save(any());
 
         Long quizId = 1L;
         Attempt attempt = quizTakerService.attemptQuiz(quizId, attemptDTO);
@@ -66,99 +105,67 @@ public class QuizTakerServiceImplTest {
         assertEquals(Double.valueOf(100), attempt.getTotalScore());
     }
 
-    public AttemptDTO getAttemptDTO() {
-        AttemptDTO attemptDTO = AttemptDTO
-                .builder()
-                .quizId(1L)
-                .id(1L)
-                .answers(List.of(getAttemptAnswerDTO()))
-                .build();
+    @Test
+    public void testAttemptQuiz_withOneQuestion_SingleAnswer_0Score(){
+        AttemptAnswerDTO attemptAnswerDTO = getAttemptAnswerDTO(2L);
+        AttemptDTO attemptDTO = getAttemptDTO(List.of(attemptAnswerDTO));
 
-        return attemptDTO;
+        when(attemptRepository.findAttemptByUserIdAndQuizId(any(), any()))
+                .thenReturn(null);
+
+        when(quizRepository.findQuizById(any()))
+                .thenReturn(getQuiz(QuestionTypeEnum.SINGLE_ANSWER, true));
+
+        when(questionRepository.findQuestionById(any()))
+                .thenReturn(getQuestion(QuestionTypeEnum.SINGLE_ANSWER));
+        
+        when(optionRepository.findOptionById(2L))
+                .thenReturn(getIncorrectOption(2L, "Option 2"));
+
+        doAnswer(new Answer() {
+            public Object answer(InvocationOnMock invocation) throws Throwable {
+                Attempt attempt = (Attempt) invocation.getArguments()[0];
+                attempt.setId(1L);
+                return attempt;
+            }
+        }).when(attemptRepository).save(any());
+
+        Long quizId = 1L;
+        Attempt attempt = quizTakerService.attemptQuiz(quizId, attemptDTO);
+
+        assertEquals(Double.valueOf(-100), attempt.getTotalScore());
     }
 
-    public AttemptAnswerDTO getAttemptAnswerDTO() {
-        AttemptAnswerDTO answerDTO = AttemptAnswerDTO
-                .builder()
-                .options(getQuestionOptionsDTO())
-                .build();
+    @Test
+    public void testAttemptQuiz_withOneQuestion_MultipleAnswer_33Score(){
+        AttemptAnswerDTO attemptAnswerDTO = getAttemptAnswerDTO(1L, 2L);
+        AttemptDTO attemptDTO = getAttemptDTO(List.of(attemptAnswerDTO));
 
-        return answerDTO;
-    }
+        when(attemptRepository.findAttemptByUserIdAndQuizId(any(), any()))
+                .thenReturn(null);
 
-    public List<OptionDTO> getQuestionOptionsDTO() {
-        OptionDTO option1 = OptionDTO.builder()
-                .optionId(1l)
-                .optionText("Option 1")
-                .build();
+        when(quizRepository.findQuizById(any()))
+                .thenReturn(getQuiz(QuestionTypeEnum.MULTIPLE_ANSWER, true));
 
-        return List.of(option1);
-    }
+        when(questionRepository.findQuestionById(any()))
+                .thenReturn(getQuestion(QuestionTypeEnum.MULTIPLE_ANSWER));
 
-    public Quiz getQuiz() {
+        when(optionRepository.findOptionById(1L))
+                .thenReturn(getCorrectOption(1L, "Option 1"));
+        when(optionRepository.findOptionById(2L))
+                .thenReturn(getIncorrectOption(2L, "Option 2"));
 
-        return Quiz.builder()
-                .id(1l)
-                .published(true)
-                .questions(List.of())
-                .title("Title")
-                .build();
-    }
+        doAnswer(new Answer() {
+            public Object answer(InvocationOnMock invocation) throws Throwable {
+                Attempt attempt = (Attempt) invocation.getArguments()[0];
+                attempt.setId(1L);
+                return attempt;
+            }
+        }).when(attemptRepository).save(any());
 
-    public List<Question> getQuizQuestions() {
+        Long quizId = 1L;
+        Attempt attempt = quizTakerService.attemptQuiz(quizId, attemptDTO);
 
-        return List.of(
-                Question
-                        .builder()
-                        .type(QuestionTypeEnum.SINGLE_ANSWER)
-                        .statement("Statement")
-                        .options(getQuestionOptions())
-                        .answer(getQuestionAnswer())
-                        .build()
-        );
-    }
-
-    public QuestionAnswer getQuestionAnswer() {
-        QuestionAnswer questionAnswer = QuestionAnswer
-                .builder()
-                .id(1L)
-                .options(List.of(Option.builder()
-                        .id(1l)
-                        .optionText("Option 1")
-                        .build()))
-                .build();
-        return questionAnswer;
-    }
-
-    public List<OptionDTO> getCorrectQuestionOptions() {
-        OptionDTO option1 = OptionDTO.builder()
-                .optionId(1l)
-                .optionText("Option 1")
-                .build();
-
-        return List.of(option1);
-    }
-
-    public List<OptionDTO> getIncorrectQuestionOptions() {
-        OptionDTO option2 = OptionDTO.builder()
-                .optionId(2l)
-                .optionText("Option 2")
-                .build();
-
-        return List.of(option2);
-    }
-
-    public List<Option> getQuestionOptions() {
-        Option option1 = Option.builder()
-                .id(1l)
-                .optionText("Option 1")
-                .build();
-
-        Option option2 = Option.builder()
-                .id(2l)
-                .optionText("Option 2")
-                .build();
-
-        return List.of(option1,option2);
+        assertEquals(Double.valueOf(66.66), attempt.getTotalScore(), 0.01);
     }
 }

@@ -15,5 +15,5 @@ public class AttemptAnswerDTO {
 
     private Long questionId;
 
-    private List<OptionDTO> options;
+    private List<OptionTakerDTO> options;
 }

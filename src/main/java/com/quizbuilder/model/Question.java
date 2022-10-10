@@ -28,6 +28,7 @@ public class Question {
 
     private String statement;
 
+    @Enumerated(EnumType.STRING)
     private QuestionTypeEnum type;
 
     @ManyToMany(fetch =  FetchType.EAGER,
@@ -39,8 +40,5 @@ public class Question {
     @JoinTable(	name = "question_options",
             joinColumns = @JoinColumn(name = "question_id"),
             inverseJoinColumns = @JoinColumn(name = "option_id"))
-    private List<Option> options = new ArrayList<>();
-
-    @ManyToOne(cascade=CascadeType.PERSIST)
-    private QuestionAnswer answer;
+    private Set<Option> options;
 }

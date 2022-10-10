@@ -23,6 +23,7 @@ public class Attempt {
     @ManyToOne(cascade=CascadeType.PERSIST)
     private Quiz quiz;
 
+    @Column(precision = 5, scale = 2)
     private Double totalScore;
 
     @OneToMany(cascade=CascadeType.ALL)

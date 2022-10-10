@@ -1,5 +1,6 @@
 package com.quizbuilder.dto;
 
+import com.quizbuilder.enums.OptionStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,4 +15,6 @@ public class OptionDTO {
     private Long optionId;
 
     private String optionText;
+
+    private OptionStatusEnum status;
 }

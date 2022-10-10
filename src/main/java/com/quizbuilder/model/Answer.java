@@ -1,21 +1,20 @@
 package com.quizbuilder.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 import javax.persistence.*;
 import java.util.List;
 import java.util.Set;
 
-@Table(name = "question_answer")
-@Entity
-@Data
+@SuperBuilder
+@Getter
+@Setter
 @NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class QuestionAnswer {
+@MappedSuperclass
+public abstract class Answer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -27,8 +26,5 @@ public class QuestionAnswer {
                     CascadeType.MERGE
             }
     )
-    @JoinTable(	name = "question_answer_options",
-            joinColumns = @JoinColumn(name = "question_answer_id"),
-            inverseJoinColumns = @JoinColumn(name = "option_id"))
-    protected List<Option> options;
+    protected Set<Option> options;
 }

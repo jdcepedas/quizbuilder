@@ -1,38 +1,33 @@
 package com.quizbuilder.model;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 import javax.persistence.*;
-import java.util.Set;
 
 @Table(name = "attempt_answer")
 @Entity
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class AttemptAnswer {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    protected Long id;
+@Getter
+@Setter
+@SuperBuilder
+@AssociationOverride(
+        name="options",
+        joinTable=@JoinTable(
+                name="attempt_answer_options",
+                joinColumns=@JoinColumn(name="attempt_answer_id"),
+                inverseJoinColumns=@JoinColumn(name="option_id")
+        )
+)
+public class AttemptAnswer extends Answer {
 
     @ManyToOne(cascade=CascadeType.PERSIST)
     private Question question;
 
-    @ManyToMany(fetch =  FetchType.EAGER,
-            cascade = {
-                    CascadeType.PERSIST,
-                    CascadeType.MERGE
-            }
-    )
-    @JoinTable(	name = "attempt_answer_options",
-            joinColumns = @JoinColumn(name = "attempt_answer_id"),
-            inverseJoinColumns = @JoinColumn(name = "option_id"))
-    protected Set<Option> options;
-
+    @Column(precision = 3, scale = 2)
     private Double individualScore;
 }

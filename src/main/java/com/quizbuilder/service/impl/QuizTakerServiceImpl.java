@@ -1,5 +1,6 @@
 package com.quizbuilder.service.impl;
 
+import com.quizbuilder.enums.OptionStatusEnum;
 import com.quizbuilder.model.*;
 import com.quizbuilder.repository.*;
 import com.quizbuilder.service.QuizTakerService;
@@ -75,13 +76,12 @@ public class QuizTakerServiceImpl implements QuizTakerService {
             Question question = questionRepository.findQuestionById(answer.getQuestionId());
             Integer allOptionsSize = question.getOptions().size();
 
-            QuestionAnswer questionAnswer = question.getAnswer();
-            Set<String> correctOptions = questionAnswer
+            Set<Option> correctOptions = question
                     .getOptions()
                     .stream()
-                    .map(option -> {
-                        return option.getOptionText();
-                    }).collect(Collectors.toSet());
+                    .filter(option ->
+                            option.getStatus().equals(OptionStatusEnum.CORRECT))
+                    .collect(Collectors.toSet());
 
             Set<Option> selectedOptions =
             answer.getOptions().stream().map(option -> {
@@ -102,10 +102,9 @@ public class QuizTakerServiceImpl implements QuizTakerService {
 
             if(!selectedOptions.isEmpty()) {
                 for (Option option : selectedOptions) {
-                    if(correctOptions.contains(option.getOptionText())) {
+                    if(correctOptions.contains(option)) {
                         answerScore += correctWeight;
-                    }
-                    else {
+                    } else {
                         answerScore += incorrectWeight;
                     }
                 }

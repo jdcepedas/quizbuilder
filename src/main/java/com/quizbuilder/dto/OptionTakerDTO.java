@@ -5,13 +5,13 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
 @Builder
-public class QuestionAnswerDTO {
+public class OptionTakerDTO {
 
-    private List<OptionDTO> options;
+    private Long optionId;
+
+    private String optionText;
 }
